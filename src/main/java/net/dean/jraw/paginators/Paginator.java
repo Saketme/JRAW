@@ -42,6 +42,8 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
     private boolean started;
     private boolean changed;
 
+    private String startAfterThingFullName;
+
     /**
      * Instantiates a new Paginator
      *
@@ -79,10 +81,14 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
         String path = getBaseUri();
 
         Map<String, String> args = new HashMap<>();
-        if (includeLimit)
+        if (includeLimit) {
             args.put("limit", String.valueOf(limit));
-        if (current != null && current.getAfter() != null)
+        }
+        if (startAfterThingFullName != null) {
+            args.put("after", startAfterThingFullName);
+        } else if (current != null && current.getAfter() != null) {
             args.put("after", current.getAfter());
+        }
 
         String sorting = getSortingString();
         boolean sortingUsed = sorting != null;
@@ -117,6 +123,7 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
         pageNumber++;
 
         if (!started) {
+            startAfterThingFullName = null;
             started = true;
         }
 
@@ -226,6 +233,16 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
     public void setLimit(int limit) {
         this.limit = limit;
         this.includeLimit = true;
+        invalidate();
+    }
+
+    /**
+     * Set the full name of a listing thing to use as the anchor point of the next listings to be fetched.
+     * Normally this is provided by Reddit after every listing load, but can be manually supplied to start
+     * paginating at a specific point.
+     */
+    public void setStartAfterThing(String thingFullName) {
+        this.startAfterThingFullName = thingFullName;
         invalidate();
     }
 
