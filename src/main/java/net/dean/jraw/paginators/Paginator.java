@@ -43,6 +43,7 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
     private boolean changed;
 
     private String startAfterThingFullName;
+    private String startBeforeThingFullName;
 
     /**
      * Instantiates a new Paginator
@@ -77,6 +78,9 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
         if (started && changed) {
             throw new IllegalStateException("Cannot change parameters without calling reset()");
         }
+        if (startBeforeThingFullName != null && startAfterThingFullName != null) {
+          throw new IllegalStateException("Only before or after can be present");
+        }
 
         String path = getBaseUri();
 
@@ -84,7 +88,9 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
         if (includeLimit) {
             args.put("limit", String.valueOf(limit));
         }
-        if (startAfterThingFullName != null) {
+        if (startBeforeThingFullName != null) {
+            args.put("before", startBeforeThingFullName);
+        } else if (startAfterThingFullName != null) {
             args.put("after", startAfterThingFullName);
         } else if (current != null && current.getAfter() != null) {
             args.put("after", current.getAfter());
@@ -246,7 +252,11 @@ public abstract class Paginator<T extends Thing> implements RedditIterable<T> {
         invalidate();
     }
 
-    /**
+    public void setStartBeforeThingFullName(String startBeforeThingFullName) {
+      this.startBeforeThingFullName = startBeforeThingFullName;
+    }
+
+  /**
      * Generates extra arguments to be included in the query string.
      * @return A non-null map of paginator-implementation-specific arguments
      */
